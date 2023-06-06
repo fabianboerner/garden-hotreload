@@ -1,0 +1,40 @@
+kind: Project
+
+name: project-0
+dotIgnoreFiles:
+  - .gardenignore
+modules:
+  include:
+    - app.garden.yml
+    - backend.Dockerfile
+    - test.js
+environments:
+  - name: dev
+    variables:
+      targetImage: development
+      dockerfileName: backend.Dockerfile
+providers:
+  - name: kubernetes
+    namespace: my-namespace
+    environments: [dev]
+    buildMode: cluster-buildkit
+    clusterBuildkit:
+      cache:
+        - type: registry
+          registry:
+            hostname: registry.azurecr.io
+            namespace: buildcache${slice(kebabCase(replace(git.branch, "/", "")), "0", "10")}
+    resources:
+      builder:
+        limits:
+          memory: 2000
+          cpu: 2000
+    context: my-context
+    setupIngressController: nginx
+    deploymentRegistry:
+      hostname: registry.azurecr.io
+      namespace: my-namespace
+    imagePullSecrets:
+      - name: secret
+        namespace: default
+defaultEnvironment: dev
